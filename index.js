@@ -1,31 +1,10 @@
-var express = require('express');
 const http = require('http');
-const socketIo = require('socket.io');
-const cors = require('cors');
+const app = require('./app');
+const { setupSocket } = require('./setupSocket');
 
-var app = express();
-app.use(cors());
 const server = http.createServer(app);
-
-// Initialize socket.io
-const io = socketIo(server, {
-    cors: {
-        origin: "*"
-    }
-});
-
-io.on('connection', (socket) => {
-    console.log('a user connected');
-
-    socket.on('disconnect', () => {
-        console.log('user disconnected');
-    });
-
-    socket.on('message', (msg) => {
-        console.log('message: ' + msg);
-        io.emit('message', msg);
-    });
-});
+app.locals.gameUsers = {};
+setupSocket(server);
 
 const PORT = process.env.PORT || 4000;
 server.listen(PORT, () => {
