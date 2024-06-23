@@ -23,6 +23,12 @@ function setupSocket(server) {
     
         // user connects, add him to list of players and broadcast the change
         socket.on('join', (join) => {
+            const keys = Object.keys(app.locals.gameUsers);                        
+            if(keys.length === app.locals.playerSlots){
+                io.to(socket.id).emit('toast', 'slots are full, cannot join now, wait for next game');
+                return;
+            }
+
             console.log(`user ${socket.id} - ${join} joined the game`);
             app.locals.gameUsers[join] = 0;
             console.log(app.locals.gameUsers);
@@ -34,8 +40,7 @@ function setupSocket(server) {
                     delete app.locals.gameUsers[join];
                     io.to(socket.id).emit('updateUsers', listUsers());
                 }
-            });              
-
+            }); 
         })
     
         socket.on('disconnect', () => {
@@ -52,6 +57,22 @@ function setupSocket(server) {
             sendAndConfirmTransaction(userTransaction.transaction).then((result) => {
                 if(result){
                     app.locals.gameUsers[userTransaction.id] = 1;
+                    const keys = Object.keys(app.locals.gameUsers);  
+                    if(keys.every(key => app.locals.gameUsers[key] === 1)){
+                        io.emit('toast', 'all players joined, picking winner in 5 seconds');
+                        new Promise(r => setTimeout(r, 5000)).then(() => {
+                            const keys = Object.keys(app.locals.gameUsers);
+                            let winnerIndex = Math.floor(Math.random() * keys.length);
+                            console.log('the winner is ' + keys[winnerIndex]);
+                            io.emit('toast', `The winner is ${keys[winnerIndex]}`);
+                            new Promise(r => setTimeout(r, 2000)).then(() => {
+                                io.emit('toast', 'sending the winner prize');
+                                sendWinnerPrize(keys[winnerIndex], keys.length * 50);
+                                app.locals.gameUsers = [];
+                                io.emit('updateUsers', []);
+                            });
+                        });
+                    }
                 }else{
                     delete app.locals.gameUsers[userTransaction.id];
                 }

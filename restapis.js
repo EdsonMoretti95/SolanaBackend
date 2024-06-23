@@ -21,8 +21,14 @@ function setupAPIs(app){
             sendWinnerPrize(keys[winnerIndex], keys.length * 50);
         });
         
-        res.status(200).send(`Winner is ${'test'}`);
+        res.status(200).send(`Winner is ${keys[winnerIndex]}`);
     })
+
+    app.post('/setPlayerSlots', (req, res) => {
+        req.body.slots;
+        app.locals.playerSlots = req.body.slots;        
+        res.status(200).send(`Player slots set to ${req.body.slots}`);
+    })    
 }
 
 module.exports = {setupAPIs};
