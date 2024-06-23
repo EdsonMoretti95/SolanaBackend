@@ -1,6 +1,7 @@
 const socketIO = require('socket.io');
 const app = require('./app');
 const { sendAndConfirmTransaction, sendWinnerPrize } = require('./blockchain');
+const { getIO, init } = require('./socket');
 
 function listUsers(){
     return Object.keys(app.locals.gameUsers).map(key => ({
@@ -10,13 +11,7 @@ function listUsers(){
 }
 
 function setupSocket(server) {
-    const io = socketIO(server, {
-    cors: {
-        origin: "*"
-    },
-    pingInterval: 10000,
-    pingTimeout: 5000,    
-    });
+    const io = init(server);
 
     io.on('connection', (socket) => {
         // user connects, send him the list of connected players
@@ -36,23 +31,6 @@ function setupSocket(server) {
                 delete app.locals.gameUsers[join];
                 io.to(socket.id).emit('updateUsers', listUsers());
             });              
-
-        })
-    
-        // if user leaves, have to remove wallet from list
-        socket.on('leave', (leave) => {
-            console.log('sending prize to ' + leave);
-            sendWinnerPrize(leave, 100).then((result) => {
-                if(result){
-                    console.log('prize sent');
-                }else{
-                    console.log('prize not sent, transaction failed');
-                }
-            });
-            //console.log(`user ${socket.id} - ${leave} left the game`)
-            //delete app.locals.gameUsers[leave];
-            //console.log(app.locals.gameUsers);
-            //io.emit('updateUsers', listUsers());
 
         })
     
