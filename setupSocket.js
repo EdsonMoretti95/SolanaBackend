@@ -28,8 +28,10 @@ function setupSocket(server) {
             console.log(app.locals.gameUsers);
             io.emit('updateUsers', listUsers());
             new Promise(r => setTimeout(r, 120000)).then(() => {
-                delete app.locals.gameUsers[join];
-                io.to(socket.id).emit('updateUsers', listUsers());
+                if(app.locals.gameUsers[join] === 0){
+                    delete app.locals.gameUsers[join];
+                    io.to(socket.id).emit('updateUsers', listUsers());
+                }
             });              
 
         })
