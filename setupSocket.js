@@ -28,6 +28,8 @@ function setupSocket(server) {
             console.log(app.locals.gameUsers);
             io.emit('updateUsers', listUsers());
             new Promise(r => setTimeout(r, 120000)).then(() => {
+                console.log('player join event after timeout');
+                console.log(app.locals.gameUsers);
                 if(app.locals.gameUsers[join] === 0){
                     delete app.locals.gameUsers[join];
                     io.to(socket.id).emit('updateUsers', listUsers());
