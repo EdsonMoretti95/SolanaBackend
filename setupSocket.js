@@ -75,6 +75,7 @@ function setupSocket(server) {
                     }
                 }else{
                     delete app.locals.gameUsers[userTransaction.id];
+                    io.emit('updateUsers', listUsers());
                 }
                 
                 io.to(socket.id).emit('paymentReceived');
