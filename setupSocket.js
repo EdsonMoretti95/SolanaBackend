@@ -64,10 +64,9 @@ function setupSocket(server) {
                             const keys = Object.keys(app.locals.gameUsers);
                             let winnerIndex = Math.floor(Math.random() * keys.length);
                             console.log('the winner is ' + keys[winnerIndex]);
-                            io.emit('toast', `The winner is ${keys[winnerIndex]}`);
-                            new Promise(r => setTimeout(r, 2000)).then(() => {
-                                io.emit('toast', 'sending the winner prize');
-                                sendWinnerPrize(keys[winnerIndex], keys.length * 50);
+                            io.emit('winner', `${keys[winnerIndex]}`);
+                            sendWinnerPrize(keys[winnerIndex], keys.length * 50);
+                            new Promise(r => setTimeout(r, 10000)).then(() => {                                
                                 app.locals.gameUsers = [];
                                 io.emit('updateUsers', []);
                             });
