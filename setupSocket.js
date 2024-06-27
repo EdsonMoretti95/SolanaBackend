@@ -15,9 +15,7 @@ function setupSocket(server) {
 
     io.on('connection', (socket) => {
         // user connects, send him the list of connected players
-        console.log(`a user connected ${socket.id}`);
         new Promise(r => setTimeout(r, 2000)).then(() => {
-            console.log('sending list of users');
             io.to(socket.id).emit('updateUsers', listUsers());
         });        
     
@@ -31,22 +29,16 @@ function setupSocket(server) {
 
             console.log(`user ${socket.id} - ${join} joined the game`);
             app.locals.gameUsers[join] = 0;
-            console.log(app.locals.gameUsers);
             io.emit('updateUsers', listUsers());
             new Promise(r => setTimeout(r, 120000)).then(() => {
                 console.log('player join event after timeout');
-                console.log(app.locals.gameUsers);
                 if(app.locals.gameUsers[join] === 0){
                     delete app.locals.gameUsers[join];
-                    io.to(socket.id).emit('updateUsers', listUsers());
+                    io.emit('updateUsers', listUsers());
                 }
             }); 
         })
-    
-        socket.on('disconnect', () => {
-            console.log(`user disconnected ${socket.id}`);
-        });
-    
+       
         socket.on('message', (msg) => {
             console.log('message: ' + msg);
             io.emit('message', msg);
