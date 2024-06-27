@@ -27,6 +27,11 @@ function setupSocket(server) {
                 return;
             }
 
+            if(keys.includes(join)){
+                io.to(socket.id).emit('toast', `can't join twice, wait transaction timeout (2 minutes) and try again`);
+                return;
+            }
+
             console.log(`user ${socket.id} - ${join} joined the game`);
             app.locals.gameUsers[join] = 0;
             io.emit('updateUsers', listUsers());
@@ -37,6 +42,14 @@ function setupSocket(server) {
                     io.emit('updateUsers', listUsers());
                 }
             }); 
+        })
+
+        socket.on('remove', (wallet) => {
+            const keys = Object.keys(app.locals.gameUsers);
+            if(keys.includes(wallet)){
+                delete app.locals.gameUsers[wallet];
+                io.emit('updateUsers', listUsers());
+            }
         })
        
         socket.on('message', (msg) => {
