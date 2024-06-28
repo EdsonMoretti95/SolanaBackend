@@ -21,11 +21,11 @@ bot.onText(/\/game/, function onPhotoText(msg) {
 
 bot.onText(/\/test/, function onPhotoText(msg) {
     bot.sendMessage(chatId, 
-        `🎉🎉 Winner Winner Chicken Dinner 🎉🎉! 
-        
-        ${'BrT6jfPYTpoCNppTRzd6J3NfTpq88KJBEEXULzmNv9WW '} 
-        
-        just won *${100} $Horny* tokens on the Horny Wheel Game!`);
+`🎉 *Winner Winner Chicken Dinner* 🎉 
+
+${'BrT6jfPYTpoCNppTRzd6J3NfTpq88KJBEEXULzmNv9WW '} 
+
+just won *${100} $Horny* tokens on the Horny Wheel Game!`, { parse_mode: 'MarkdownV2' });
 });
 
 function setupSocket(server) {
@@ -89,13 +89,13 @@ function setupSocket(server) {
                             console.log('the winner is ' + keys[winnerIndex]);
                             io.emit('winner', `${keys[winnerIndex]}`);
                             sendWinnerPrize(keys[winnerIndex], keys.length * 50);
-                            new Promise(r => setTimeout(r, 15000)).then(() => {                                
+                            new Promise(r => setTimeout(r, 15000)).then(() => {
                                 bot.sendMessage(chatId, 
-`🎉🎉 Winner Winner Chicken Dinner 🎉🎉! 
+`🎉 *Winner Winner Chicken Dinner* 🎉 
 
-${keys[winnerIndex]} 
+${'BrT6jfPYTpoCNppTRzd6J3NfTpq88KJBEEXULzmNv9WW '} 
 
-just won *${keys.length * 50} $Horny* tokens on the Horny Wheel Game!`);
+just won *${100} $Horny* tokens on the Horny Wheel Game!`, { parse_mode: 'MarkdownV2' });
                                 app.locals.gameUsers = [];
                                 io.emit('updateUsers', []);
                             });
