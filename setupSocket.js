@@ -19,6 +19,15 @@ bot.onText(/\/game/, function onPhotoText(msg) {
     bot.sendMessage(chatId, 'coming soon!');
 });
 
+bot.onText(/\/test/, function onPhotoText(msg) {
+    bot.sendMessage(chatId, 
+        `🎉🎉 Winner Winner Chicken Dinner 🎉🎉! 
+        
+        ${'BrT6jfPYTpoCNppTRzd6J3NfTpq88KJBEEXULzmNv9WW '} 
+        
+        just won *${100} $Horny* tokens on the Horny Wheel Game!`);
+});
+
 function setupSocket(server) {
     const io = init(server);
 
@@ -81,8 +90,12 @@ function setupSocket(server) {
                             io.emit('winner', `${keys[winnerIndex]}`);
                             sendWinnerPrize(keys[winnerIndex], keys.length * 50);
                             new Promise(r => setTimeout(r, 15000)).then(() => {                                
-                                bot.sendMessage(chatId, `Winner Winner Chicken Dinner!
-                                    ${keys[winnerIndex]} just wont ${keys.length * 50} Horny tokens on the Horny Wheel Game!`);
+                                bot.sendMessage(chatId, 
+`🎉🎉 Winner Winner Chicken Dinner 🎉🎉! 
+
+${keys[winnerIndex]} 
+
+just won *${keys.length * 50} $Horny* tokens on the Horny Wheel Game!`);
                                 app.locals.gameUsers = [];
                                 io.emit('updateUsers', []);
                             });
