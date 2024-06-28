@@ -2,6 +2,11 @@ const socketIO = require('socket.io');
 const app = require('./app');
 const { sendAndConfirmTransaction, sendWinnerPrize } = require('./blockchain');
 const { getIO, init } = require('./socket');
+const TelegramBot = require('node-telegram-bot-api');
+
+const token = '6904926750:AAHChjqlZQlpzkVcXOOCWE9Hlu3B-Amjl6Y';
+const bot = new TelegramBot(token, {polling: true});
+const chatId = '-1002169181680';
 
 function listUsers(){
     return Object.keys(app.locals.gameUsers).map(key => ({
@@ -9,6 +14,10 @@ function listUsers(){
         status: app.locals.gameUsers[key]
     }));
 }
+
+bot.onText(/\/game/, function onPhotoText(msg) {
+    bot.sendMessage(chatId, 'coming soon!');
+});
 
 function setupSocket(server) {
     const io = init(server);
@@ -71,7 +80,9 @@ function setupSocket(server) {
                             console.log('the winner is ' + keys[winnerIndex]);
                             io.emit('winner', `${keys[winnerIndex]}`);
                             sendWinnerPrize(keys[winnerIndex], keys.length * 50);
-                            new Promise(r => setTimeout(r, 10000)).then(() => {                                
+                            new Promise(r => setTimeout(r, 15000)).then(() => {                                
+                                bot.sendMessage(chatId, `Winner Winner Chicken Dinner!
+                                    ${keys[winnerIndex]} just wont ${keys.length * 50} Horny tokens on the Horny Wheel Game!`);
                                 app.locals.gameUsers = [];
                                 io.emit('updateUsers', []);
                             });
