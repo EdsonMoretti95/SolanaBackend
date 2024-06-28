@@ -84,9 +84,9 @@ function setupSocket(server) {
                                 bot.sendMessage(chatId, 
 `🎉 *Winner Winner Chicken Dinner* 🎉 
 
-${'BrT6jfPYTpoCNppTRzd6J3NfTpq88KJBEEXULzmNv9WW '} 
+${keys[winnerIndex]} 
 
-just won *${100} $Horny* tokens on the Horny Wheel Game\\!`, { parse_mode: 'MarkdownV2' });
+just won *${keys.length * 50} $Horny* tokens on the Horny Wheel Game\\!`, { parse_mode: 'MarkdownV2' });
                                 app.locals.gameUsers = [];
                                 io.emit('updateUsers', []);
                             });
