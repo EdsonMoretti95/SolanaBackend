@@ -149,7 +149,7 @@ ${progressBar}
 
 const updateGameMessagePeriodically = () => {
     sendGameMsg();
-    gameInterval = setInterval(() => sendGameMsg, 20000);
+    gameInterval = setInterval(() => sendGameMsg(), 20000);
 };
 
 module.exports = { setupSocket };
