@@ -9,7 +9,7 @@ const chatId = '-1002169181680';
 const winnerImg = './winner.jpg';
 const spinImg = './Spin.gif';
 
-let gameInterval = 0;
+let gameInterval = null;
 let gameMessageId = null;
 
 function listUsers(){
@@ -35,7 +35,7 @@ function setupSocket(server) {
         // user connects, add him to list of players and broadcast the change
         socket.on('join', (join) => {
             const keys = Object.keys(app.locals.gameUsers);                        
-            if(keys.length === app.locals.playerSlots){
+            if(keys.length >= app.locals.playerSlots){
                 io.to(socket.id).emit('toast', 'slots are full, cannot join now, wait for next game');
                 return;
             }
@@ -76,13 +76,14 @@ function setupSocket(server) {
                 if(result){
                     app.locals.gameUsers[userTransaction.id] = 1;
                     const keys = Object.keys(app.locals.gameUsers);
-                    if(keys.length < app.locals.playerSlots){
+                    if(keys.length < app.locals.playerSlots && gameInterval == null){
                         updateGameMessagePeriodically();
                     }
 
                     if(keys.length === app.locals.playerSlots && keys.every(key => app.locals.gameUsers[key] === 1)){
                         io.emit('toast', 'all players joined, picking winner in 5 seconds');
                         clearInterval(gameInterval);
+                        gameInterval = null;
                         gameMessageId = null;
                         new Promise(r => setTimeout(r, 5000)).then(() => {
                             const keys = Object.keys(app.locals.gameUsers);
