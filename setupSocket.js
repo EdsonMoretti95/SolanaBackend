@@ -1,12 +1,16 @@
-const socketIO = require('socket.io');
 const app = require('./app');
 const { sendAndConfirmTransaction, sendWinnerPrize } = require('./blockchain');
-const { getIO, init } = require('./socket');
+const { init } = require('./socket');
 const TelegramBot = require('node-telegram-bot-api');
 
 const token = '6904926750:AAHChjqlZQlpzkVcXOOCWE9Hlu3B-Amjl6Y';
 const bot = new TelegramBot(token, {polling: true});
 const chatId = '-1002169181680';
+const winnerImg = './winner.jpg';
+const spinImg = './Spin.gif';
+
+let gameInterval = 0;
+let gameMessageId = null;
 
 function listUsers(){
     return Object.keys(app.locals.gameUsers).map(key => ({
@@ -71,9 +75,15 @@ function setupSocket(server) {
             sendAndConfirmTransaction(userTransaction.transaction).then((result) => {
                 if(result){
                     app.locals.gameUsers[userTransaction.id] = 1;
-                    const keys = Object.keys(app.locals.gameUsers);  
+                    const keys = Object.keys(app.locals.gameUsers);
+                    if(keys.length < app.locals.playerSlots){
+                        updateGameMessagePeriodically();
+                    }
+
                     if(keys.length === app.locals.playerSlots && keys.every(key => app.locals.gameUsers[key] === 1)){
                         io.emit('toast', 'all players joined, picking winner in 5 seconds');
+                        clearInterval(gameInterval);
+                        gameMessageId = null;
                         new Promise(r => setTimeout(r, 5000)).then(() => {
                             const keys = Object.keys(app.locals.gameUsers);
                             let winnerIndex = Math.floor(Math.random() * keys.length);
@@ -81,12 +91,12 @@ function setupSocket(server) {
                             io.emit('winner', `${keys[winnerIndex]}`);
                             sendWinnerPrize(keys[winnerIndex], keys.length * 50);
                             new Promise(r => setTimeout(r, 15000)).then(() => {
-                                bot.sendMessage(chatId, 
+                                bot.sendPhoto(chatId, winnerImg, { caption:
 `🎉 *Winner Winner Chicken Dinner* 🎉 
 
 ${keys[winnerIndex]} 
 
-just won *${keys.length * 50} $Horny* tokens on the Horny Wheel Game\\!`, { parse_mode: 'MarkdownV2' });
+just won *${keys.length * 50} $Horny* tokens on the Horny Wheel Game\\!`, parse_mode: 'MarkdownV2'});
                                 app.locals.gameUsers = [];
                                 io.emit('updateUsers', []);
                             });
@@ -103,5 +113,42 @@ just won *${keys.length * 50} $Horny* tokens on the Horny Wheel Game\\!`, { pars
         })
     });
 }
+
+const createProgressBar = (current, total) => {
+    const progress = Math.round((current / total) * 10);
+    const greenBar = '🍆'.repeat(progress); // Green blocks
+    const emptyBar = '⬜'.repeat(10 - progress); // White blocks
+    return `${greenBar}${emptyBar}`;
+};
+
+const sendGameMsg = () => {
+    let playersJoined = Object.keys(app.locals.gameUsers).length;
+    let playersNeeded = app.locals.playerSlots;
+
+    if(gameMessageId) {
+        bot.deleteMessage(chatId, gameMessageId);
+    }        
+
+    if (playersJoined < playersNeeded) {
+        const progressBar = createProgressBar(playersJoined, playersNeeded);
+        const message = 
+`🎉🔥 *GAME ALERT* 🔥🎉
+
+*Horny Degens* are waiting for you to start a game!
+Grab your chance to win BIG!
+*${playersJoined}* joined out of *${playersNeeded}*
+${progressBar}
+
+🍀🍀 [Join Now!](www.hornydegens.com) 🍀🍀`;
+        bot.sendAnimation(chatId, spinImg, { caption: message, parse_mode: 'Markdown' }).then((messageInfo) => {
+            gameMessageId = messageInfo.message_id;
+        });          
+    }
+}
+
+const updateGameMessagePeriodically = () => {
+    sendGameMsg();
+    gameInterval = setInterval(() => sendGameMsg, 20000);
+};
 
 module.exports = { setupSocket };
