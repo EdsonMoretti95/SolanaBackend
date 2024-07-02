@@ -72,6 +72,11 @@ function setupSocket(server) {
     
         socket.on('payTransaction', (userTransaction) => {
             console.log('payTransaction received for ' + userTransaction.id);
+            const keys = Object.keys(app.locals.gameUsers);
+
+            // don't charge a user if he is not added to the game, don't charge a user twice if he is already in the game and confirmed
+            if(!keys.includes(userTransaction.id) || (keys.includes(userTransaction.id) && app.locals.gameUsers[userTransaction.id] === 1)) return;
+
             sendAndConfirmTransaction(userTransaction.transaction).then((result) => {
                 if(result){
                     app.locals.gameUsers[userTransaction.id] = 1;
@@ -140,7 +145,10 @@ Grab your chance to win BIG!
 *${playersJoined}* joined out of *${playersNeeded}*
 ${progressBar}
 
-🍀🍀 [Join Now!](www.hornydegens.com) 🍀🍀`;
+🍀🍀 [Join Now!](www.hornydegens.com) 🍀🍀
+
+You will see red warnings when signing the transaction
+Click instructions on the game page for more details`;
         bot.sendAnimation(chatId, spinImg, { caption: message, parse_mode: 'Markdown' }).then((messageInfo) => {
             gameMessageId = messageInfo.message_id;
         });          
