@@ -93,7 +93,7 @@ function setupSocket(server) {
                             sendWinnerPrize(keys[winnerIndex], keys.length * 50);
                             new Promise(r => setTimeout(r, 15000)).then(() => {
                                 bot.sendPhoto(chatId, winnerImg, { caption:
-`🎉 *Winner Winner Chicken Dinner* 🎉 
+`🎉 *Winner Winner* 🎉 
 
 ${keys[winnerIndex]} 
 
@@ -149,7 +149,7 @@ ${progressBar}
 
 const updateGameMessagePeriodically = () => {
     sendGameMsg();
-    gameInterval = setInterval(() => sendGameMsg(), 20000);
+    gameInterval = setInterval(() => sendGameMsg(), 60000);
 };
 
 module.exports = { setupSocket };
