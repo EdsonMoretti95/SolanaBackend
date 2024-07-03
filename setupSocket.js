@@ -157,7 +157,7 @@ Click instructions on the game page for more details`;
 
 const updateGameMessagePeriodically = () => {
     sendGameMsg();
-    gameInterval = setInterval(() => sendGameMsg(), 60000);
+    gameInterval = setInterval(() => sendGameMsg(), 3600000);
 };
 
 module.exports = { setupSocket };
