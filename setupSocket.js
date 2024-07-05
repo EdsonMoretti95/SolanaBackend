@@ -81,9 +81,9 @@ function setupSocket(server) {
                 if(result){
                     app.locals.gameUsers[userTransaction.id] = 1;
                     const keys = Object.keys(app.locals.gameUsers);
-                    if(keys.length < app.locals.playerSlots && gameInterval == null){
-                        updateGameMessagePeriodically();
-                    }
+                    // if(keys.length < app.locals.playerSlots && gameInterval == null){
+                    //     updateGameMessagePeriodically();
+                    // }
 
                     if(keys.length === app.locals.playerSlots && keys.every(key => app.locals.gameUsers[key] === 1)){
                         io.emit('toast', 'all players joined, picking winner in 5 seconds');
