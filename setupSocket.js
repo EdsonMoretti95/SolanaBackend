@@ -58,6 +58,10 @@ bot.onText(/\/startgame$/, (msg, p) => {
     bot.sendMessage(chatId, `Send me a message containing the entry fee amount and the time in minutes, "/startgame 50 15" for a game costing 50 tokens starting in 15 minutes`);
 });
 
+bot.onText(/\/startgame@HornyWheelBot$/, (msg, p) => {
+    bot.sendMessage(chatId, `Send me a message containing the entry fee amount and the time in minutes, "/startgame 50 15" for a game costing 50 tokens starting in 15 minutes`);
+});
+
 function startGame(){
     if(gameMessageId) {
         bot.deleteMessage(chatId, gameMessageId);
@@ -79,9 +83,10 @@ function startGame(){
         return;
     }
 
+    io.emit('updateUsers', getGameState());
     new Promise(r => setTimeout(r, 5000)).then(() => {        
         let winnerIndex = Math.floor(Math.random() * keys.length);
-        console.log('the winner is ' + keys[winnerIndex]);
+        console.log('the winner is ' + keys[winnerIndex]);        
         io.emit('winner', `${keys[winnerIndex]}`);
         sendWinnerPrize(keys[winnerIndex], keys.length * gameEntryFee);
         new Promise(r => setTimeout(r, 15000)).then(() => {
