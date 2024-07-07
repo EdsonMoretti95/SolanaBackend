@@ -69,6 +69,11 @@ function startGame(){
     gameInterval = null;
     gameMessageId = null;
     gameStatus = 0;
+    if(app.locals.gameUsers.length === 0){
+        bot.sendMessage(chatId, `Game finished wihout any players`);
+        return;
+    }
+    
     new Promise(r => setTimeout(r, 5000)).then(() => {
         const keys = Object.keys(app.locals.gameUsers);
         let winnerIndex = Math.floor(Math.random() * keys.length);
