@@ -69,13 +69,14 @@ function startGame(){
     gameInterval = null;
     gameMessageId = null;
     gameStatus = 0;
-    if(app.locals.gameUsers.length === 0){
+
+    const keys = Object.keys(app.locals.gameUsers);
+    if(keys.length === 0){
         bot.sendMessage(chatId, `Game finished wihout any players`);
         return;
     }
-    
-    new Promise(r => setTimeout(r, 5000)).then(() => {
-        const keys = Object.keys(app.locals.gameUsers);
+
+    new Promise(r => setTimeout(r, 5000)).then(() => {        
         let winnerIndex = Math.floor(Math.random() * keys.length);
         console.log('the winner is ' + keys[winnerIndex]);
         io.emit('winner', `${keys[winnerIndex]}`);
