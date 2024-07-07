@@ -32,7 +32,7 @@ bot.onText(/\/startgame (\S+) (\S+)/, (msg, p) => {
         gameMinutes = timeMinutes;
         gameEntryFee = feeAmount;
         gameStartDate = Date.now();
-        setTimeout(startGame, timeMinutes * 1000);
+        setTimeout(startGame, timeMinutes * 60000);
         updateGameMessagePeriodically();
         bot.deleteMessage(chatId, msg.message_id);
     } catch (error) {
@@ -65,7 +65,7 @@ just won *${keys.length * gameEntryFee} $Horny* tokens on the Horny Wheel Game\\
             io.emit('updateUsers', []);
         });
     });
-}
+};
 
 function setupSocket(server) {
     const io = init(server);
