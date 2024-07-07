@@ -71,6 +71,7 @@ function startGame(){
     gameStatus = 0;
 
     const keys = Object.keys(app.locals.gameUsers);
+    console.log('gameusers', app.locals.gameUsers);
     if(keys.length === 0){
         bot.sendMessage(chatId, `Game finished wihout any players`);
         app.locals.gameUsers = {};
