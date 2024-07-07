@@ -24,8 +24,8 @@ function listUsers(){
 
 bot.onText(/\/startgame (\S+) (\S+)/, (msg, p) => {
     try {
-        const feeAmount = Number(p[1]);
-        const timeMinutes = Number(p[2]);
+        const feeAmount = Number.parseInt(p[1]);
+        const timeMinutes = Number.parseInt(p[2]);
 
         gameEntryFee = feeAmount;
         gameStartDate = Date.now();
