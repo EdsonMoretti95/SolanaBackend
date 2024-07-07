@@ -12,6 +12,9 @@ const spinImg = './Spin.gif';
 let gameInterval = null;
 let gameMessageId = null;
 
+let gameStartDate = null;
+let gameEntryFee = 50;
+
 function listUsers(){
     return Object.keys(app.locals.gameUsers).map(key => ({
         id: key,
@@ -19,9 +22,47 @@ function listUsers(){
     }));
 }
 
-bot.onText(/\/game/, function onPhotoText(msg) {
-    bot.sendMessage(chatId, 'coming soon!');
+bot.onText(/\/startgame (\S+) (\S+)/, (msg, p) => {
+    try {
+        const feeAmount = Number(p[1]);
+        const timeMinutes = Number(p[2]);
+
+        gameEntryFee = feeAmount;
+        gameStartDate = Date.now();
+        setTimeout(() => startGame(), timeMinutes * 1000);
+        updateGameMessagePeriodically();
+        bot.deleteMessage(chatId, msg.id);
+    } catch (error) {
+        bot.sendMessage(chatId, 'error processing the command');
+    }    
 });
+
+bot.onText(/\/startgame/, (msg, p) => {
+    bot.sendMessage(chatId, `Send me a message containing the entry fee amount and the time in minutes, "/startgame 50 15" for a game costing 50 tokens starting in 15 minutes`);
+});
+
+function startGame(){
+    clearInterval(gameInterval);
+    gameInterval = null;
+    gameMessageId = null;
+    new Promise(r => setTimeout(r, 5000)).then(() => {
+        const keys = Object.keys(app.locals.gameUsers);
+        let winnerIndex = Math.floor(Math.random() * keys.length);
+        console.log('the winner is ' + keys[winnerIndex]);
+        io.emit('winner', `${keys[winnerIndex]}`);
+        sendWinnerPrize(keys[winnerIndex], keys.length * gameEntryFee);
+        new Promise(r => setTimeout(r, 15000)).then(() => {
+            bot.sendPhoto(chatId, winnerImg, { caption:
+`🎉 *Winner Winner* 🎉 
+
+${keys[winnerIndex]} 
+
+just won *${keys.length * gameEntryFee} $Horny* tokens on the Horny Wheel Game\\!`, parse_mode: 'MarkdownV2'});
+            app.locals.gameUsers = [];
+            io.emit('updateUsers', []);
+        });
+    });
+}
 
 function setupSocket(server) {
     const io = init(server);
@@ -79,38 +120,9 @@ function setupSocket(server) {
 
             sendAndConfirmTransaction(userTransaction.transaction).then((result) => {
                 if(result){
-                    app.locals.gameUsers[userTransaction.id] = 1;
-                    const keys = Object.keys(app.locals.gameUsers);
-                    // if(keys.length < app.locals.playerSlots && gameInterval == null){
-                    //     updateGameMessagePeriodically();
-                    // }
-
-                    if(keys.length === app.locals.playerSlots && keys.every(key => app.locals.gameUsers[key] === 1)){
-                        io.emit('toast', 'all players joined, picking winner in 5 seconds');
-                        clearInterval(gameInterval);
-                        gameInterval = null;
-                        gameMessageId = null;
-                        new Promise(r => setTimeout(r, 5000)).then(() => {
-                            const keys = Object.keys(app.locals.gameUsers);
-                            let winnerIndex = Math.floor(Math.random() * keys.length);
-                            console.log('the winner is ' + keys[winnerIndex]);
-                            io.emit('winner', `${keys[winnerIndex]}`);
-                            sendWinnerPrize(keys[winnerIndex], keys.length * 50);
-                            new Promise(r => setTimeout(r, 15000)).then(() => {
-                                bot.sendPhoto(chatId, winnerImg, { caption:
-`🎉 *Winner Winner* 🎉 
-
-${keys[winnerIndex]} 
-
-just won *${keys.length * 50} $Horny* tokens on the Horny Wheel Game\\!`, parse_mode: 'MarkdownV2'});
-                                app.locals.gameUsers = [];
-                                io.emit('updateUsers', []);
-                            });
-                        });
-                    }
+                    app.locals.gameUsers[userTransaction.id] = 1;                    
                 }else{
                     delete app.locals.gameUsers[userTransaction.id];
-                    io.emit('updateUsers', listUsers());
                 }
                 
                 io.to(socket.id).emit('paymentReceived');
@@ -147,8 +159,7 @@ ${progressBar}
 
 🍀🍀 [Join Now!](www.hornydegens.com) 🍀🍀
 
-You will see red warnings when signing the transaction
-Click instructions on the game page for more details`;
+The game will start in *${getRemainingGameTime()} minutes*`;
         bot.sendAnimation(chatId, spinImg, { caption: message, parse_mode: 'Markdown' }).then((messageInfo) => {
             gameMessageId = messageInfo.message_id;
         });          
@@ -157,7 +168,12 @@ Click instructions on the game page for more details`;
 
 const updateGameMessagePeriodically = () => {
     sendGameMsg();
-    gameInterval = setInterval(() => sendGameMsg(), 3600000);
+    gameInterval = setInterval(() => sendGameMsg(), 60000);
 };
+
+const getRemainingGameTime = () => {
+    let elapsed = Date.now() - gameStartDate;
+    return Math.floor(elapsed / 60000);
+}
 
 module.exports = { setupSocket };
