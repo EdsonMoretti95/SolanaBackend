@@ -15,15 +15,26 @@ let gameMessageId = null;
 let gameStartDate = null;
 let gameEntryFee = 50;
 let gameMinutes = 0;
+let gameStatus = 0;
 
-function listUsers(){
-    return Object.keys(app.locals.gameUsers).map(key => ({
+function getGameState(){
+    var users = Object.keys(app.locals.gameUsers).map(key => ({
         id: key,
         status: app.locals.gameUsers[key]
     }));
+
+    return {
+        status: gameStatus,
+        entryValue: gameEntryFee,
+        users: users
+    };
 }
 
 bot.onText(/\/startgame (\S+) (\S+)/, (msg, p) => {
+    if(gameStatus === 1){
+        bot.sendMessage(chatId, `There's a game running already, wait for it finish before starting a new one`);
+    }
+
     try {
         const feeAmount = Number.parseInt(p[1]);
         const timeMinutes = Number.parseInt(p[2]);
@@ -32,12 +43,15 @@ bot.onText(/\/startgame (\S+) (\S+)/, (msg, p) => {
         gameMinutes = timeMinutes;
         gameEntryFee = feeAmount;
         gameStartDate = Date.now();
+        gameStatus = 1;
         setTimeout(startGame, timeMinutes * 60000);
         updateGameMessagePeriodically();
         bot.deleteMessage(chatId, msg.message_id);
+        const io = getIO();
+        io.emit('updateUsers', getGameState());
     } catch (error) {
         bot.sendMessage(chatId, 'error processing the command');
-    }    
+    }
 });
 
 bot.onText(/\/startgame$/, (msg, p) => {
@@ -45,10 +59,16 @@ bot.onText(/\/startgame$/, (msg, p) => {
 });
 
 function startGame(){
+    if(gameMessageId) {
+        bot.deleteMessage(chatId, gameMessageId);
+        gameMessageId = null;
+    }
+
     const io = getIO();
     clearInterval(gameInterval);
     gameInterval = null;
     gameMessageId = null;
+    gameStatus = 0;
     new Promise(r => setTimeout(r, 5000)).then(() => {
         const keys = Object.keys(app.locals.gameUsers);
         let winnerIndex = Math.floor(Math.random() * keys.length);
@@ -74,11 +94,15 @@ function setupSocket(server) {
     io.on('connection', (socket) => {
         // user connects, send him the list of connected players
         new Promise(r => setTimeout(r, 2000)).then(() => {
-            io.to(socket.id).emit('updateUsers', listUsers());
+            io.to(socket.id).emit('updateUsers', getGameState());
         });        
     
         // user connects, add him to list of players and broadcast the change
         socket.on('join', (join) => {
+            if(gameStatus === 0){
+                io.to(socket.id).emit('toast', `No game is running, contact admins on telegram to start a game`);
+            }
+
             const keys = Object.keys(app.locals.gameUsers);                        
             if(keys.length >= app.locals.playerSlots){
                 io.to(socket.id).emit('toast', 'slots are full, cannot join now, wait for next game');
@@ -88,16 +112,16 @@ function setupSocket(server) {
             if(keys.includes(join)){
                 io.to(socket.id).emit('toast', `can't join twice, wait transaction timeout (2 minutes) and try again`);
                 return;
-            }
+            }            
 
             console.log(`user ${socket.id} - ${join} joined the game`);
             app.locals.gameUsers[join] = 0;
-            io.emit('updateUsers', listUsers());
+            io.emit('updateUsers', getGameState());
             new Promise(r => setTimeout(r, 120000)).then(() => {
                 console.log('player join event after timeout');
                 if(app.locals.gameUsers[join] === 0){
                     delete app.locals.gameUsers[join];
-                    io.emit('updateUsers', listUsers());
+                    io.emit('updateUsers', getGameState());
                 }
             }); 
         })
@@ -106,7 +130,7 @@ function setupSocket(server) {
             const keys = Object.keys(app.locals.gameUsers);
             if(keys.includes(wallet)){
                 delete app.locals.gameUsers[wallet];
-                io.emit('updateUsers', listUsers());
+                io.emit('updateUsers', getGameState());
             }
         })
        
@@ -130,7 +154,7 @@ function setupSocket(server) {
                 }
                 
                 io.to(socket.id).emit('paymentReceived');
-                io.emit('updateUsers', listUsers());
+                io.emit('updateUsers', getGameState());
             })
         })
     });
