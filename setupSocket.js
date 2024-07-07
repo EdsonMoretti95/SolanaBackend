@@ -73,6 +73,8 @@ function startGame(){
     const keys = Object.keys(app.locals.gameUsers);
     if(keys.length === 0){
         bot.sendMessage(chatId, `Game finished wihout any players`);
+        app.locals.gameUsers = {};
+        io.emit('updateUsers', getGameState());        
         return;
     }
 
@@ -88,8 +90,8 @@ function startGame(){
 ${keys[winnerIndex]} 
 
 just won *${keys.length * gameEntryFee} $Horny* tokens on the Horny Wheel Game\\!`, parse_mode: 'MarkdownV2'});
-            app.locals.gameUsers = [];
-            io.emit('updateUsers', []);
+            app.locals.gameUsers = {};
+            io.emit('updateUsers', getGameState());
         });
     });
 };
@@ -193,6 +195,7 @@ ${progressBar}
 
 🍀🍀 [Join Now!](www.hornydegens.com) 🍀🍀
 
+Entry fee is *${gameEntryFee} $Horny*
 The game will start in *${gameMinutes - getRemainingGameTime()} minutes*`;
         bot.sendAnimation(chatId, spinImg, { caption: message, parse_mode: 'Markdown' }).then((messageInfo) => {
             gameMessageId = messageInfo.message_id;
