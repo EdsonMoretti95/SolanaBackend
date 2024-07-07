@@ -14,6 +14,7 @@ let gameMessageId = null;
 
 let gameStartDate = null;
 let gameEntryFee = 50;
+let gameMinutes = 0;
 
 function listUsers(){
     return Object.keys(app.locals.gameUsers).map(key => ({
@@ -27,17 +28,19 @@ bot.onText(/\/startgame (\S+) (\S+)/, (msg, p) => {
         const feeAmount = Number.parseInt(p[1]);
         const timeMinutes = Number.parseInt(p[2]);
 
+        console.log(`timeMinutes ${timeMinutes}`);
+        gameMinutes = timeMinutes;
         gameEntryFee = feeAmount;
         gameStartDate = Date.now();
-        setTimeout(() => startGame(), timeMinutes * 1000);
+        setTimeout(startGame, timeMinutes * 1000);
         updateGameMessagePeriodically();
-        bot.deleteMessage(chatId, msg.id);
+        bot.deleteMessage(chatId, msg.message_id);
     } catch (error) {
         bot.sendMessage(chatId, 'error processing the command');
     }    
 });
 
-bot.onText(/\/startgame/, (msg, p) => {
+bot.onText(/\/startgame$/, (msg, p) => {
     bot.sendMessage(chatId, `Send me a message containing the entry fee amount and the time in minutes, "/startgame 50 15" for a game costing 50 tokens starting in 15 minutes`);
 });
 
@@ -159,7 +162,7 @@ ${progressBar}
 
 🍀🍀 [Join Now!](www.hornydegens.com) 🍀🍀
 
-The game will start in *${getRemainingGameTime()} minutes*`;
+The game will start in *${gameMinutes - getRemainingGameTime()} minutes*`;
         bot.sendAnimation(chatId, spinImg, { caption: message, parse_mode: 'Markdown' }).then((messageInfo) => {
             gameMessageId = messageInfo.message_id;
         });          
