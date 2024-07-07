@@ -1,6 +1,6 @@
 const app = require('./app');
 const { sendAndConfirmTransaction, sendWinnerPrize } = require('./blockchain');
-const { init } = require('./socket');
+const { init, getIO } = require('./socket');
 const TelegramBot = require('node-telegram-bot-api');
 
 const token = '6904926750:AAHChjqlZQlpzkVcXOOCWE9Hlu3B-Amjl6Y';
@@ -9,7 +9,6 @@ const chatId = '-1002169181680';
 const winnerImg = './winner.jpg';
 const spinImg = './Spin.gif';
 
-let io = null;
 let gameInterval = null;
 let gameMessageId = null;
 
@@ -46,6 +45,7 @@ bot.onText(/\/startgame$/, (msg, p) => {
 });
 
 function startGame(){
+    const io = getIO();
     clearInterval(gameInterval);
     gameInterval = null;
     gameMessageId = null;
@@ -69,7 +69,7 @@ just won *${keys.length * gameEntryFee} $Horny* tokens on the Horny Wheel Game\\
 };
 
 function setupSocket(server) {
-    io = init(server);
+    const io = init(server);
 
     io.on('connection', (socket) => {
         // user connects, send him the list of connected players
@@ -133,72 +133,8 @@ function setupSocket(server) {
                 io.emit('updateUsers', listUsers());
             })
         })
-    });    
-}
-
-io.on('connection', (socket) => {
-        // user connects, send him the list of connected players
-        new Promise(r => setTimeout(r, 2000)).then(() => {
-            io.to(socket.id).emit('updateUsers', listUsers());
-        });        
-    
-        // user connects, add him to list of players and broadcast the change
-        socket.on('join', (join) => {
-            const keys = Object.keys(app.locals.gameUsers);                        
-            if(keys.length >= app.locals.playerSlots){
-                io.to(socket.id).emit('toast', 'slots are full, cannot join now, wait for next game');
-                return;
-            }
-
-            if(keys.includes(join)){
-                io.to(socket.id).emit('toast', `can't join twice, wait transaction timeout (2 minutes) and try again`);
-                return;
-            }
-
-            console.log(`user ${socket.id} - ${join} joined the game`);
-            app.locals.gameUsers[join] = 0;
-            io.emit('updateUsers', listUsers());
-            new Promise(r => setTimeout(r, 120000)).then(() => {
-                console.log('player join event after timeout');
-                if(app.locals.gameUsers[join] === 0){
-                    delete app.locals.gameUsers[join];
-                    io.emit('updateUsers', listUsers());
-                }
-            }); 
-        })
-
-        socket.on('remove', (wallet) => {
-            const keys = Object.keys(app.locals.gameUsers);
-            if(keys.includes(wallet)){
-                delete app.locals.gameUsers[wallet];
-                io.emit('updateUsers', listUsers());
-            }
-        })
-       
-        socket.on('message', (msg) => {
-            console.log('message: ' + msg);
-            io.emit('message', msg);
-        });
-    
-        socket.on('payTransaction', (userTransaction) => {
-            console.log('payTransaction received for ' + userTransaction.id);
-            const keys = Object.keys(app.locals.gameUsers);
-
-            // don't charge a user if he is not added to the game, don't charge a user twice if he is already in the game and confirmed
-            if(!keys.includes(userTransaction.id) || (keys.includes(userTransaction.id) && app.locals.gameUsers[userTransaction.id] === 1)) return;
-
-            sendAndConfirmTransaction(userTransaction.transaction).then((result) => {
-                if(result){
-                    app.locals.gameUsers[userTransaction.id] = 1;                    
-                }else{
-                    delete app.locals.gameUsers[userTransaction.id];
-                }
-                
-                io.to(socket.id).emit('paymentReceived');
-                io.emit('updateUsers', listUsers());
-            })
-        })
     });
+}
 
 const createProgressBar = (current, total) => {
     const progress = Math.round((current / total) * 10);
