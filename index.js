@@ -6,6 +6,7 @@ const { setupAPIs } = require('./restapis');
 const server = http.createServer(app);
 app.locals.gameUsers = {};
 app.locals.playerSlots = 12;
+app.locals.gameEntryFee = 100;
 setupSocket(server);
 setupAPIs(app);
 

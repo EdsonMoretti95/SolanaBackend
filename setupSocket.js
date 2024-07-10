@@ -13,7 +13,6 @@ let gameInterval = null;
 let gameMessageId = null;
 
 let gameStartDate = null;
-let gameEntryFee = 50;
 let gameMinutes = 0;
 let gameStatus = 0;
 
@@ -25,7 +24,7 @@ function getGameState(){
 
     return {
         status: gameStatus,
-        entryValue: gameEntryFee,
+        entryValue: app.locals.gameEntryFee,
         users: users
     };
 }
@@ -41,7 +40,7 @@ bot.onText(/\/startgame (\S+) (\S+)/, (msg, p) => {
 
         console.log(`timeMinutes ${timeMinutes}`);
         gameMinutes = timeMinutes;
-        gameEntryFee = feeAmount;
+        app.locals.gameEntryFee = feeAmount;
         gameStartDate = Date.now();
         gameStatus = 1;
         setTimeout(startGame, timeMinutes * 60000);
@@ -88,14 +87,14 @@ function startGame(){
         let winnerIndex = Math.floor(Math.random() * keys.length);
         console.log('the winner is ' + keys[winnerIndex]);        
         io.emit('winner', `${keys[winnerIndex]}`);
-        sendWinnerPrize(keys[winnerIndex], keys.length * gameEntryFee);
+        sendWinnerPrize(keys[winnerIndex], keys.length * app.locals.gameEntryFee);
         new Promise(r => setTimeout(r, 15000)).then(() => {
             bot.sendPhoto(chatId, winnerImg, { caption:
 `🎉 *Winner Winner* 🎉 
 
 ${keys[winnerIndex]} 
 
-just won *${keys.length * gameEntryFee} $Horny* tokens on the Horny Wheel Game\\!`, parse_mode: 'MarkdownV2'});
+just won *${keys.length * app.locals.gameEntryFee} $Horny* tokens on the Horny Wheel Game\\!`, parse_mode: 'MarkdownV2'});
             app.locals.gameUsers = {};
             io.emit('updateUsers', getGameState());
         });
@@ -201,7 +200,7 @@ ${progressBar}
 
 🍀🍀 [Join Now!](www.hornydegens.com) 🍀🍀
 
-Entry fee is *${gameEntryFee} $Horny*
+Entry fee is *${app.locals.gameEntryFee} $Horny*
 The game will start in *${gameMinutes - getRemainingGameTime()} minutes*`;
         bot.sendAnimation(chatId, spinImg, { caption: message, parse_mode: 'Markdown' }).then((messageInfo) => {
             gameMessageId = messageInfo.message_id;

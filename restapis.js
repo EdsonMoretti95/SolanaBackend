@@ -11,6 +11,10 @@ function setupAPIs(app){
         res.status(200).send('Users cleared');
     });    
 
+    app.get('/entryFee', (req, res) => {
+        res.json({entryFee: app.locals.gameEntryFee});
+    });     
+
     // app.post('/selectWinner', (req, res) => {
     //     const keys = Object.keys(app.locals.gameUsers);
     //     let winnerIndex = Math.floor(Math.random() * keys.length);
