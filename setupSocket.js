@@ -6,8 +6,8 @@ const TelegramBot = require('node-telegram-bot-api');
 const token = '6904926750:AAHChjqlZQlpzkVcXOOCWE9Hlu3B-Amjl6Y';
 const bot = new TelegramBot(token, {polling: true});
 const chatId = '-1002169181680';
-const winnerImg = './winner.jpg';
-const spinImg = './Spin.gif';
+const winnerVideo = './win.mp4';
+const spinVideo = './game.mp4';
 
 let gameInterval = null;
 let gameMessageId = null;
@@ -89,7 +89,7 @@ function startGame(){
         io.emit('winner', `${keys[winnerIndex]}`);
         sendWinnerPrize(keys[winnerIndex], keys.length * app.locals.gameEntryFee);
         new Promise(r => setTimeout(r, 15000)).then(() => {
-            bot.sendPhoto(chatId, winnerImg, { caption:
+            bot.sendVideo(chatId, winnerVideo, { caption:
 `🎉 *Winner Winner* 🎉 
 
 ${keys[winnerIndex]} 
@@ -202,7 +202,7 @@ ${progressBar}
 
 Entry fee is *${app.locals.gameEntryFee} $Horny*
 The game will start in *${gameMinutes - getRemainingGameTime()} minutes*`;
-        bot.sendAnimation(chatId, spinImg, { caption: message, parse_mode: 'Markdown' }).then((messageInfo) => {
+        bot.sendVideo(chatId, spinVideo, { caption: message, parse_mode: 'Markdown' }).then((messageInfo) => {
             gameMessageId = messageInfo.message_id;
         });          
     }
