@@ -142,8 +142,10 @@ function setupSocket(server) {
         socket.on('remove', (wallet) => {
             const keys = Object.keys(app.locals.gameUsers);
             if(keys.includes(wallet)){
-                delete app.locals.gameUsers[wallet];
-                io.emit('updateUsers', getGameState());
+                if(app.locals.gameUsers[wallet] === 0){
+                    delete app.locals.gameUsers[wallet];
+                    io.emit('updateUsers', getGameState());
+                }
             }
         })
        
